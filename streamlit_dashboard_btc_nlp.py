@@ -197,28 +197,28 @@ with col2:
     show_cm(xgb_pipeline, X_test, y_test, "XGBoost + SMOTE")
 
 # 10-Fold CV pada data train
-st.subheader("10-Fold Stratified Cross-validation di Train Set")
-rf_cv_scores = cross_val_score(rf_pipeline, X_train, y_train, scoring='accuracy', cv=cv, n_jobs=-1)
-xgb_cv_scores = cross_val_score(xgb_pipeline, X_train, y_train, scoring='accuracy', cv=cv, n_jobs=-1)
-st.write(f"Random Forest mean acc: **{np.mean(rf_cv_scores):.4f}** ± {np.std(rf_cv_scores):.4f}")
-st.write(f"XGBoost mean acc: **{np.mean(xgb_cv_scores):.4f}** ± {np.std(xgb_cv_scores):.4f}")
+# st.subheader("10-Fold Stratified Cross-validation di Train Set")
+# rf_cv_scores = cross_val_score(rf_pipeline, X_train, y_train, scoring='accuracy', cv=cv, n_jobs=-1)
+# xgb_cv_scores = cross_val_score(xgb_pipeline, X_train, y_train, scoring='accuracy', cv=cv, n_jobs=-1)
+# st.write(f"Random Forest mean acc: **{np.mean(rf_cv_scores):.4f}** ± {np.std(rf_cv_scores):.4f}")
+# st.write(f"XGBoost mean acc: **{np.mean(xgb_cv_scores):.4f}** ± {np.std(xgb_cv_scores):.4f}")
 
-# Perbandingan sebelum/sesudah SMOTE
-def simple_model_scores(X_tr, y_tr):
-    rf = RandomForestClassifier(random_state=42, **best_rf_params)
-    xgb = XGBClassifier(eval_metric='logloss', random_state=42, **best_xgb_params)
-    rf_scores = cross_val_score(rf, X_tr, y_tr, cv=cv, scoring='accuracy', n_jobs=-1)
-    xgb_scores = cross_val_score(xgb, X_tr, y_tr, cv=cv, scoring='accuracy', n_jobs=-1)
-    return rf_scores, xgb_scores
+# # Perbandingan sebelum/sesudah SMOTE
+# def simple_model_scores(X_tr, y_tr):
+#     rf = RandomForestClassifier(random_state=42, **best_rf_params)
+#     xgb = XGBClassifier(eval_metric='logloss', random_state=42, **best_xgb_params)
+#     rf_scores = cross_val_score(rf, X_tr, y_tr, cv=cv, scoring='accuracy', n_jobs=-1)
+#     xgb_scores = cross_val_score(xgb, X_tr, y_tr, cv=cv, scoring='accuracy', n_jobs=-1)
+#     return rf_scores, xgb_scores
 
-rf_acc_before, xgb_acc_before = simple_model_scores(X_train, y_train)
+# rf_acc_before, xgb_acc_before = simple_model_scores(X_train, y_train)
 
-st.subheader("Akurasi Random Forest & XGBoost Sebelum/Sesudah SMOTE")
-barchar_df = pd.DataFrame({
-    "Sebelum SMOTE": [rf_acc_before.mean(), xgb_acc_before.mean()],
-    "Sesudah SMOTE": [rf_cv_scores.mean(), xgb_cv_scores.mean()]
-}, index=["Random Forest", "XGBoost"])
-st.bar_chart(barchar_df)
+# st.subheader("Akurasi Random Forest & XGBoost Sebelum/Sesudah SMOTE")
+# barchar_df = pd.DataFrame({
+#     "Sebelum SMOTE": [rf_acc_before.mean(), xgb_acc_before.mean()],
+#     "Sesudah SMOTE": [rf_cv_scores.mean(), xgb_cv_scores.mean()]
+# }, index=["Random Forest", "XGBoost"])
+# st.bar_chart(barchar_df)
 
 # Tabel evaluasi komplit (semua metrik, test set)
 rf_before = RandomForestClassifier(random_state=42, **best_rf_params)
@@ -257,4 +257,3 @@ scores_df = pd.DataFrame({
 st.dataframe(scores_df.style.highlight_max(axis=0), use_container_width=True)
 
 st.markdown("---")
-st.info("Dashboard siap digunakan di berbagai device! Jika ingin mengubah data, upload CSV lain melalui sidebar.")
