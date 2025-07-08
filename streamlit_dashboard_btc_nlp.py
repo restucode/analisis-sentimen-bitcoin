@@ -1,7 +1,7 @@
-# streamlit_dashboard_btc_nlp.py
+# python -m streamlit run streamlit_dashboard_btc_nlp.py
 
+# streamlit_dashboard_btc_nlp.py
 import streamlit as st
-import os
 import pandas as pd
 import string
 import numpy as np
@@ -10,35 +10,23 @@ import seaborn as sns
 from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
 from sklearn.model_selection import train_test_split, StratifiedKFold, cross_val_score
-from sklearn.metrics import (
-    classification_report, confusion_matrix, ConfusionMatrixDisplay,
-    accuracy_score, precision_score, recall_score, f1_score
-)
+from sklearn.metrics import classification_report, confusion_matrix, ConfusionMatrixDisplay, accuracy_score, precision_score, recall_score, f1_score
 from imblearn.over_sampling import SMOTE
 from imblearn.pipeline import Pipeline
 from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.manifold import TSNE
 from wordcloud import WordCloud
 from collections import Counter
 
 st.set_page_config(page_title="Bitcoin Sentiment Dashboard", layout="wide")
 
-# === Tampilkan isi requirements.txt di sidebar
-st.sidebar.markdown("---")
-if os.path.exists("requirements.txt"):
-    with open("requirements.txt") as f:
-        reqs = f.read()
-    st.sidebar.text_area("requirements.txt", reqs, height=200)
-    st.sidebar.warning("Install requirements terlebih dulu via terminal:\npip install -r requirements.txt")
-else:
-    st.sidebar.info("File requirements.txt tidak ditemukan.")
-
-st.title("🪙 Bitcoin Dataset Sentiment Dashboard")
-st.caption("Responsive dashboard | Classification, Balancing, Feature Visualizations, and Model Comparison")
-
 @st.cache_data
 def load_data(input_file):
     df = pd.read_csv(input_file)
     return df
+
+st.title("🪙 Bitcoin Dataset Sentiment Dashboard")
+st.caption("Responsive dashboard | Classification, Balancing, Feature Visualizations, and Model Comparison")
 
 input_file = st.sidebar.text_input(
     "Input CSV file", "bitcoin2225_pelabelan_embedding.csv"
@@ -46,13 +34,9 @@ input_file = st.sidebar.text_input(
 result_df = load_data(input_file)
 emb_cols = [col for col in result_df.columns if col.startswith('emb_')]
 
-# === FIX: Pastikan X numerik dan bebas NaN, y integer ===
-X = result_df[emb_cols].to_numpy(dtype=np.float64)
-y = result_df['label'].to_numpy(dtype=int)
-
-if np.isnan(X).any():
-    st.error("Data X mengandung NaN atau tidak numerik. SMOTE tidak dapat berjalan. Perbaiki sumber data Anda dahulu!")
-    st.stop()
+# Feature matrix & label
+X = result_df[emb_cols].values
+y = result_df['label'].values
 
 # --- Split train-test
 X_train, X_test, y_train, y_test = train_test_split(
@@ -67,14 +51,17 @@ X_smote, y_smote = smote.fit_resample(X, y)
 # =========== SIDEBAR SNAPSHOT =============
 with st.sidebar:
     st.header("Data Snapshot & Info")
+    # Dataset
     st.write("**Contoh Data**")
     st.dataframe(result_df.head(), use_container_width=True)
     st.write("**Fitur Embedding**", f"(jumlah: {len(emb_cols)})")
     st.write(emb_cols[:10])
+    # Info
     st.markdown("---")
     st.write(f"**Total Data:** {len(X)}")
     st.write(f"**Train/Test:** {len(X_train)}/{len(X_test)}")
     st.write(f"**Proporsi:** {len(X_train)/len(X):.2f} : {len(X_test)/len(X):.2f}")
+
     st.markdown("---")
     st.write("**Distribusi Label Data Lengkap**")
     st.write(pd.Series(y).value_counts())
@@ -173,8 +160,9 @@ rf_pipeline = Pipeline([
 ])
 xgb_pipeline = Pipeline([
     ('smote', SMOTE(random_state=42)),
-    ('clf', XGBClassifier(eval_metric='logloss', use_label_encoder=False, random_state=42, **best_xgb_params))
+    ('clf', XGBClassifier(eval_metric='logloss', random_state=42, **best_xgb_params))
 ])
+
 cv = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
 rf_pipeline.fit(X_train, y_train)
 xgb_pipeline.fit(X_train, y_train)
@@ -218,7 +206,7 @@ st.write(f"XGBoost mean acc: **{np.mean(xgb_cv_scores):.4f}** ± {np.std(xgb_cv_
 # Perbandingan sebelum/sesudah SMOTE
 def simple_model_scores(X_tr, y_tr):
     rf = RandomForestClassifier(random_state=42, **best_rf_params)
-    xgb = XGBClassifier(eval_metric='logloss', use_label_encoder=False, random_state=42, **best_xgb_params)
+    xgb = XGBClassifier(eval_metric='logloss', random_state=42, **best_xgb_params)
     rf_scores = cross_val_score(rf, X_tr, y_tr, cv=cv, scoring='accuracy', n_jobs=-1)
     xgb_scores = cross_val_score(xgb, X_tr, y_tr, cv=cv, scoring='accuracy', n_jobs=-1)
     return rf_scores, xgb_scores
@@ -234,7 +222,7 @@ st.bar_chart(barchar_df)
 
 # Tabel evaluasi komplit (semua metrik, test set)
 rf_before = RandomForestClassifier(random_state=42, **best_rf_params)
-xgb_before = XGBClassifier(eval_metric='logloss', use_label_encoder=False, random_state=42, **best_xgb_params)
+xgb_before = XGBClassifier(eval_metric='logloss', random_state=42, **best_xgb_params)
 rf_before.fit(X_train, y_train)
 xgb_before.fit(X_train, y_train)
 scores_df = pd.DataFrame({
@@ -269,7 +257,4 @@ scores_df = pd.DataFrame({
 st.dataframe(scores_df.style.highlight_max(axis=0), use_container_width=True)
 
 st.markdown("---")
-st.info("Dashboard siap digunakan di berbagai device! \
-Install requirements terlebih dahulu via terminal: \
-pip install -r requirements.txt, lalu jalankan: \
-streamlit run streamlit_dashboard_btc_nlp.py")
+st.info("Dashboard siap digunakan di berbagai device! Jika ingin mengubah data, upload CSV lain melalui sidebar.")
