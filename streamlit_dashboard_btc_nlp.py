@@ -141,11 +141,11 @@ if "teks" in result_df.columns:
     with col1:
         st.write("Top 10 Kata Positif")
         st.bar_chart(pd.DataFrame(dict(pos_common), index=['count']).T)
-        st.image(wc_pos.generate(pos_corpus).to_array(), caption="Wordcloud Positif", use_column_width=True)
+        st.image(wc_pos.generate(pos_corpus).to_array(), caption="Wordcloud Positif", use_container_width=True)
     with col2:
         st.write("Top 10 Kata Negatif")
         st.bar_chart(pd.DataFrame(dict(neg_common), index=['count']).T)
-        st.image(wc_neg.generate(neg_corpus).to_array(), caption="Wordcloud Negatif", use_column_width=True)
+        st.image(wc_neg.generate(neg_corpus).to_array(), caption="Wordcloud Negatif", use_container_width=True)
 else:
     st.warning("Kolom `teks` tidak ada pada data, fitur wordcloud tidak akan muncul.")
 
