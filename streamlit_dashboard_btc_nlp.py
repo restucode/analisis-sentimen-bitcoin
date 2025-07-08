@@ -1,7 +1,7 @@
-# python -m streamlit run streamlit_dashboard_btc_nlp.py
-
 # streamlit_dashboard_btc_nlp.py
+
 import streamlit as st
+import os
 import pandas as pd
 import string
 import numpy as np
@@ -10,23 +10,35 @@ import seaborn as sns
 from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
 from sklearn.model_selection import train_test_split, StratifiedKFold, cross_val_score
-from sklearn.metrics import classification_report, confusion_matrix, ConfusionMatrixDisplay, accuracy_score, precision_score, recall_score, f1_score
+from sklearn.metrics import (
+    classification_report, confusion_matrix, ConfusionMatrixDisplay,
+    accuracy_score, precision_score, recall_score, f1_score
+)
 from imblearn.over_sampling import SMOTE
 from imblearn.pipeline import Pipeline
 from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.manifold import TSNE
 from wordcloud import WordCloud
 from collections import Counter
 
 st.set_page_config(page_title="Bitcoin Sentiment Dashboard", layout="wide")
 
+# === Tampilkan isi requirements.txt di sidebar
+st.sidebar.markdown("---")
+if os.path.exists("requirements.txt"):
+    with open("requirements.txt") as f:
+        reqs = f.read()
+    st.sidebar.text_area("requirements.txt", reqs, height=200)
+    st.sidebar.warning("Install requirements terlebih dulu via terminal:\npip install -r requirements.txt")
+else:
+    st.sidebar.info("File requirements.txt tidak ditemukan.")
+
+st.title("🪙 Bitcoin Dataset Sentiment Dashboard")
+st.caption("Responsive dashboard | Classification, Balancing, Feature Visualizations, and Model Comparison")
+
 @st.cache_data
 def load_data(input_file):
     df = pd.read_csv(input_file)
     return df
-
-st.title("🪙 Bitcoin Dataset Sentiment Dashboard")
-st.caption("Responsive dashboard | Classification, Balancing, Feature Visualizations, and Model Comparison")
 
 input_file = st.sidebar.text_input(
     "Input CSV file", "bitcoin2225_pelabelan_embedding.csv"
@@ -51,17 +63,14 @@ X_smote, y_smote = smote.fit_resample(X, y)
 # =========== SIDEBAR SNAPSHOT =============
 with st.sidebar:
     st.header("Data Snapshot & Info")
-    # Dataset
     st.write("**Contoh Data**")
     st.dataframe(result_df.head(), use_container_width=True)
     st.write("**Fitur Embedding**", f"(jumlah: {len(emb_cols)})")
     st.write(emb_cols[:10])
-    # Info
     st.markdown("---")
     st.write(f"**Total Data:** {len(X)}")
     st.write(f"**Train/Test:** {len(X_train)}/{len(X_test)}")
     st.write(f"**Proporsi:** {len(X_train)/len(X):.2f} : {len(X_test)/len(X):.2f}")
-
     st.markdown("---")
     st.write("**Distribusi Label Data Lengkap**")
     st.write(pd.Series(y).value_counts())
@@ -257,4 +266,7 @@ scores_df = pd.DataFrame({
 st.dataframe(scores_df.style.highlight_max(axis=0), use_container_width=True)
 
 st.markdown("---")
-st.info("Dashboard siap digunakan di berbagai device! Jika ingin mengubah data, upload CSV lain melalui sidebar.")
+st.info("Dashboard siap digunakan di berbagai device! \
+Install requirements terlebih dahulu via terminal: \
+pip install -r requirements.txt, lalu jalankan: \
+streamlit run streamlit_dashboard_btc_nlp.py")
