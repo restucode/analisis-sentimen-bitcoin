@@ -46,9 +46,13 @@ input_file = st.sidebar.text_input(
 result_df = load_data(input_file)
 emb_cols = [col for col in result_df.columns if col.startswith('emb_')]
 
-# Feature matrix & label
-X = result_df[emb_cols].values
-y = result_df['label'].values
+# === FIX: Pastikan X numerik dan bebas NaN, y integer ===
+X = result_df[emb_cols].to_numpy(dtype=np.float64)
+y = result_df['label'].to_numpy(dtype=int)
+
+if np.isnan(X).any():
+    st.error("Data X mengandung NaN atau tidak numerik. SMOTE tidak dapat berjalan. Perbaiki sumber data Anda dahulu!")
+    st.stop()
 
 # --- Split train-test
 X_train, X_test, y_train, y_test = train_test_split(
@@ -171,7 +175,6 @@ xgb_pipeline = Pipeline([
     ('smote', SMOTE(random_state=42)),
     ('clf', XGBClassifier(eval_metric='logloss', use_label_encoder=False, random_state=42, **best_xgb_params))
 ])
-
 cv = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
 rf_pipeline.fit(X_train, y_train)
 xgb_pipeline.fit(X_train, y_train)
